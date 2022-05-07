@@ -80,6 +80,8 @@ class AllCasts:
 
 	def download_episode(episode_url, directory, filename):
 		
+		# adding a user agent allows you to avoid 403 errors in some cases
+		
 		agent = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:94.0) Gecko/20100101 Firefox/94.0','Referer':'https://your_url_or_web_addrees'} 	
 		print(f"Downloading {episode_url}...")
 		response = requests.get(episode_url, headers=agent, stream=True)
@@ -87,8 +89,6 @@ class AllCasts:
 			for chunk in response.iter_content(chunk_size=1024):
 				if chunk:
 					f.write(chunk)
-		# wget.download(episode_url, out=directory, bar=wget.bar_thermometer)
-		# TODO: rename files to the title of the podcast episode with datestamp
 
 	def download_all_episodes(feed_url, directory):
 		'''
@@ -98,6 +98,7 @@ class AllCasts:
 		podcast_dict = AllCasts.podcast_dict(feed_url)
 		for item in podcast_dict['rss']['channel']['item']:
 			podcast_title = item['title']
+			# slashes will break the file name
 			podcast_title = podcast_title.replace("/", "")
 			file_name = f"{podcast_title}.mp3"
 			AllCasts.download_episode(item['enclosure']['@url'], directory, file_name)
@@ -116,8 +117,8 @@ class AllCasts:
 		'''
 		download all podcasts from a text file and save them to the directory
 		'''
-		with open(file_path, 'r') as file:
-			for line in file:
+		with open(file_path, 'r') as f:
+			for line in f.readlines():
 				AllCasts.download_all_episodes(line, directory)
 
 	def itunes_search_cli():
@@ -157,7 +158,7 @@ def main():
 		parser.add_argument("-d", "--directory", help="the directory to save the podcast episodes", required=False, type=str, metavar="<DIRECTORY>")
 		parser.add_argument("-s", "--start", help="the number of the first episode to download", type=int, metavar="<NUMBER>")
 		parser.add_argument("-e", "--end", help="the number of the last episode to download", type=int, metavar="<NUMBER>")
-		parser.add_argument("-a", "--all", help="download all episodes", default=True, action="store_true", required=False)
+		parser.add_argument("-a", "--all", help="download all episodes", action="store_true", required=False)
 		parser.add_argument("-n", "--number", help="download a specific episode", type=int, metavar="<NUMBER>")
 		parser.add_argument("-l", "--latest", help="download the latest episode", action="store_true", required=False)
 		parser.add_argument("-v", "--version", help="display the version number", action="store_true", required=False)
