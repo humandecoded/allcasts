@@ -10,7 +10,7 @@ import os
 import urllib
 from os import path
 import sys
-
+import requests
 import argparse
 import colorama as col
 import pyinputplus as pyip
@@ -18,7 +18,6 @@ import wget
 import xmltodict
 from pprint import pprint
 from itunes_API import ItunesAPI
-from transcribe import transcribe
 
 # initialise colorama (required for Windows)
 col.init()
@@ -80,14 +79,18 @@ class AllCasts:
 			print(f"\n{col.Fore.BLUE}--> 🎉 All podcast episodes downloaded!{col.Fore.RESET}")
 
 	def download_episode(episode_url, directory, filename):
-		'''
-		download the podcast episode from the individual episode's url (NOT the RSS feed url) and save it to the directory
-		'''	
+		
+		agent = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:94.0) Gecko/20100101 Firefox/94.0','Referer':'https://your_url_or_web_addrees'} 	
 		print(f"Downloading {episode_url}...")
-		wget.download(episode_url, out=directory, bar=wget.bar_thermometer)
+		response = requests.get(episode_url, headers=agent, stream=True)
+		with open(directory + "/" + filename, "wb") as f:
+			for chunk in response.iter_content(chunk_size=1024):
+				if chunk:
+					f.write(chunk)
+		# wget.download(episode_url, out=directory, bar=wget.bar_thermometer)
 		# TODO: rename files to the title of the podcast episode with datestamp
 
-	def download_all_episodes(feed_url, directory, transcribe=False):
+	def download_all_episodes(feed_url, directory):
 		'''
 		download all podcasts from the rss feed url and save them to the directory
 		'''
@@ -95,11 +98,10 @@ class AllCasts:
 		podcast_dict = AllCasts.podcast_dict(feed_url)
 		for item in podcast_dict['rss']['channel']['item']:
 			podcast_title = item['title']
+			podcast_title = podcast_title.replace("/", "")
 			file_name = f"{podcast_title}.mp3"
 			AllCasts.download_episode(item['enclosure']['@url'], directory, file_name)
 			print(f"\n{col.Fore.GREEN}🎧 Downloaded {podcast_title}{col.Fore.RESET} as {col.Fore.BLUE}{file_name}{col.Fore.RESET}")
-			if transcribe:
-				AllCasts.transcribe_episode(path.join(directory, file_name))
 		print(f"\n{col.Fore.BLUE}--> 🎉 All podcasts downloaded!{col.Fore.RESET}")
 
 	def create_directory(directory):
@@ -138,22 +140,6 @@ class AllCasts:
 			print(f"\n{col.Fore.RED}Error: No podcasts found!{col.Fore.RESET}")
 			sys.exit(1)
 
-	def transcribe_episode(mp3_file_path):
-		'''
-		Transcripe an MP3 file to text and write it to a file in the same directory as the MP3 file
-		ATP303.mp3 -> ATP303.txt
-		'''
-		# get the name of the MP3 file without filename extension
-		file_name = mp3_file_path.split('/')[-1][:-4]
-		# get the path of the directory the MP3 file is in
-		directory = mp3_file_path.split('/')[:-1]
-		print(f"\n{col.Fore.GREEN}✍️ Transcribing {file_name}...{col.Fore.RESET}")
-		# transcribe the podcast episode
-		transcribed_text = transcribe(mp3_file_path)
-		# create new text file with the transcribed text
-		transcribed_file = open(path.join(directory, f"{file_name}.txt"), "w")
-		transcribed_file.write(transcribed_text)
-		transcribed_file.close()
 
 def main():
 	'''
@@ -169,10 +155,9 @@ def main():
 		mutually_exclusive.add_argument("-f", "--feed", help="the url of the podcast feed", type=str, metavar="<URL>")
 		mutually_exclusive.add_argument("-i", "--input", help="the input file containing a list of podcast feeds", type=str, metavar="<FILE>")
 		parser.add_argument("-d", "--directory", help="the directory to save the podcast episodes", required=False, type=str, metavar="<DIRECTORY>")
-		parser.add_argument("-t", "--transcribe", help="transcribe the podcast episodes to text", action="store_true")
 		parser.add_argument("-s", "--start", help="the number of the first episode to download", type=int, metavar="<NUMBER>")
 		parser.add_argument("-e", "--end", help="the number of the last episode to download", type=int, metavar="<NUMBER>")
-		parser.add_argument("-a", "--all", help="download all episodes", action="store_true", required=False)
+		parser.add_argument("-a", "--all", help="download all episodes", default=True, action="store_true", required=False)
 		parser.add_argument("-n", "--number", help="download a specific episode", type=int, metavar="<NUMBER>")
 		parser.add_argument("-l", "--latest", help="download the latest episode", action="store_true", required=False)
 		parser.add_argument("-v", "--version", help="display the version number", action="store_true", required=False)
@@ -188,11 +173,11 @@ def main():
 		else:
 			directory = os.getcwd()
 		if args.all:
-			AllCasts.download_all_episodes(args.feed, directory, transcribe=args.transcribe)
+			AllCasts.download_all_episodes(args.feed, directory)
 		elif args.start and args.end:
-			AllCasts.download_episode_range(args.feed, directory, args.start, args.end, transcribe=args.transcribe)
+			AllCasts.download_episode_range(args.feed, directory, args.start, args.end)
 		elif args.number:
-			AllCasts.download_episode_range(args.feed, directory, args.number, args.number, transcribe=args.transcribe)
+			AllCasts.download_episode_range(args.feed, directory, args.number, args.number)
 		elif args.version:
 			print(f"{col.Fore.BLUE}AllCasts v {col.Fore.RESET}")
 		elif args.input:

@@ -4,3 +4,4 @@ PySimpleValidate==0.2.12
 stdiomask==0.0.6
 wget==3.2
 xmltodict==0.12.0
+requests
