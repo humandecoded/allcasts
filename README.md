@@ -1,4 +1,4 @@
-# allcasts 📻 🗃
+## allcasts 📻 🗃
 
 
 A Python script for downloading all available episodes from a podcast RSS feed. Useful for making private archives of your favourite podcasts.
