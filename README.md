@@ -4,6 +4,11 @@
 A Python script for downloading all available episodes from a podcast RSS feed. Useful for making private archives of your favourite podcasts.
 This is a stripped down version of the original.
 This version relies on `response.get()` as opposed to `wget` thus allowing us to pass a user-agent along with our download request. 
+
+### Updates to Original Allcasts.py
+* When downloading, Allcasts will check if that file already exists in the save directory and skip if necessary. This gives you the abillity to build it out a list of RSS feeds you would like to check periodically and end up with a well organized collection of files. 
+* Now have the ability to designate saving sub-folders on a per url basis when using the `-i` option
+
 ### Command Line: Arguments
 
 Allcasts supports a variety of command line arguments. To display help message below use `allcasts -h`
@@ -31,6 +36,11 @@ optional arguments:
   -l, --latest          download the latest episode
   -v, --version         display the version number
 ```
+### Batch Downloading from CSV File
+
+When using the `-i` option you can also specify a sub-folder to place that feed in to. Just make the second field of the csv a folder name. Your csv will be structured as: `<rss feed url>, <folder name>`
+
+You can still specify the root of your saves using `-d`
 
 #### Example Commands
 
