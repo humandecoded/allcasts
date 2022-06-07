@@ -19,6 +19,9 @@ import xmltodict
 from pprint import pprint
 from itunes_API import ItunesAPI
 import csv
+import time
+from datetime import datetime
+
 # initialise colorama (required for Windows)
 col.init()
 
@@ -30,6 +33,7 @@ def create_podcast_dict(url):
 	print(url)
 	with urllib.request.urlopen(url) as response:
 		podcast_dict = xmltodict.parse(response.read())
+
 	return podcast_dict
 
 def download_episode(feed_url, directory, episode_number):
@@ -93,25 +97,33 @@ def download_episode(episode_url, directory, filename):
 			if chunk:
 				f.write(chunk)
 
-def download_all_episodes(feed_url, directory):
+def download_all_episodes(feed_url, directory, log_path):
 	'''
 	download all podcasts from the rss feed url and save them to the directory
 	'''
+	
+	# create a log file for errors
+	with open(log_path, "a") as f:
 	# create the directory if it doesn't exist
-	podcast_dict = create_podcast_dict(feed_url)
-	for item in podcast_dict['rss']['channel']['item']:
-		podcast_title = item['title']
-		# slashes will break the file name
-		podcast_title = podcast_title.replace("/", "")
-		file_name = f"{podcast_title}.mp3"
-		
-		# check for existence of file in the save directory
-		if file_name in os.listdir(directory):
-			print(f"{file_name} is already saved in this folder. Skipping")
-		else:
-			download_episode(item['enclosure']['@url'], directory, file_name)
-			print(f"\n{col.Fore.GREEN}🎧 Downloaded {podcast_title}{col.Fore.RESET} as {col.Fore.BLUE}{file_name}{col.Fore.RESET}")
-	print(f"\n{col.Fore.BLUE}--> 🎉 All podcasts downloaded!{col.Fore.RESET}")
+		podcast_dict = create_podcast_dict(feed_url)
+		for item in podcast_dict['rss']['channel']['item']:
+			podcast_title = item['title']
+			# slashes will break the file name
+			podcast_title = podcast_title.replace("/", "")
+			file_name = f"{podcast_title}.mp3"
+			
+			# check for existence of file in the save directory
+			if file_name in os.listdir(directory):
+				print(f"{file_name} is already saved in this folder. Skipping")
+			else:
+				try:
+					download_episode(item['enclosure']['@url'], directory, file_name)
+				except KeyError:
+					print(f"Error: Could not download {file_name}......")
+					f.write(f"{directory}/{podcast_title}\n")
+
+				print(f"\n{col.Fore.GREEN}🎧 Downloaded {podcast_title}{col.Fore.RESET} as {col.Fore.BLUE}{file_name}{col.Fore.RESET}")
+		print(f"\n{col.Fore.BLUE}--> 🎉 All podcasts downloaded!{col.Fore.RESET}")
 
 def create_directory(directory):
 	'''
@@ -125,7 +137,8 @@ def download_all_podcasts_from_file(file_path, directory):
 	'''
 	download all podcasts from a text file and save them to the directory
 	'''
-	
+	log_name = datetime.now().strftime("%Y-%d-%m-%H:%M:%S") + ".log"
+
 	with open(file_path, 'r') as f:
 		reader = csv.reader(f)
 		rss_list = list(reader)
@@ -136,7 +149,7 @@ def download_all_podcasts_from_file(file_path, directory):
 			else:
 				save_location = directory + line[1].strip() + "/"
 			create_directory(save_location)
-			download_all_episodes(feed_url = line[0].strip(), directory = save_location)
+			download_all_episodes(feed_url = line[0].strip(), directory = save_location, log_path=directory+log_name)
 
 
 def itunes_search_cli():
