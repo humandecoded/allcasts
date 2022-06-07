@@ -6,8 +6,11 @@ This is a stripped down version of the original.
 This version relies on `response.get()` as opposed to `wget` thus allowing us to pass a user-agent along with our download request. 
 
 ### Updates to Original Allcasts.py
-* When downloading, Allcasts will check if that file already exists in the save directory and skip if necessary. This gives you the abillity to build it out a list of RSS feeds you would like to check periodically and end up with a well organized collection of files. 
-* Now have the ability to designate saving sub-folders on a per url basis when using the `-i` option
+* When downloading, Allcasts will check if the file already exists in the save directory and skip if necessary.
+
+* Now have the ability to designate saving sub-folders on a per url basis when using the `-i` option. This gives you the abillity to build out a list of RSS feeds you would like to check periodically and end up with a well organized collection of files.
+
+* Error logs are saved in the directory specified with the `-d` option and are name with the curent date and time.
 
 ### Command Line: Arguments
 
