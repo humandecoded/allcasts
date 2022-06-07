@@ -247,5 +247,7 @@ def main():
 if __name__ == '__main__':
 	main()
 
-
+# todo: what other metadata can be pulled from the rss feed?
+# todo: similar to yt-dlp, what formatting options can we add to the file names: episode nubmer in que, dates etc....
+# todo:add logging, or at least soemthing that catches erros
 
