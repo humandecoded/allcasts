@@ -12,6 +12,8 @@ This version relies on `response.get()` as opposed to `wget` thus allowing us to
 
 * Error logs are saved in the directory specified with the `-d` option and are name with the curent date and time.
 
+* When batch downloading with `-i` the publish date gets included with the file name for easier sorting later
+
 ### Command Line: Arguments
 
 Allcasts supports a variety of command line arguments. To display help message below use `allcasts -h`
