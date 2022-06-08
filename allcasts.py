@@ -146,7 +146,7 @@ def download_all_podcasts_from_file(file_path, directory):
 	'''
 	download all podcasts from a text file and save them to the directory
 	'''
-	log_name = datetime.now().strftime("%Y-%d-%m-%H:%M:%S") + ".log"
+	log_name = datetime.now().strftime("%Y-%m-%d-%H:%M:%S") + ".log"
 
 	with open(file_path, 'r') as f:
 		reader = csv.reader(f)
