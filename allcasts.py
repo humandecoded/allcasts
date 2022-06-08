@@ -108,12 +108,21 @@ def download_all_episodes(feed_url, directory, log_path):
 		podcast_dict = create_podcast_dict(feed_url)
 		for item in podcast_dict['rss']['channel']['item']:
 			podcast_title = item['title']
+			# extract the publish date from rss feed
+			try:
+				pub_date = datetime.strftime(datetime.strptime(item['pubDate'], "%a, %d %b %Y %H:%M:%S %z"), "%Y-%m-%d")
+			except ValueError:
+				try:
+					pub_date = datetime.strftime(datetime.strptime(item['pubDate'], "%a, %d %b %Y %H:%M:%S %Z"), "%Y-%m-%d")
+				except ValueError:
+					pub_date=""
+
 			# slashes will break the file name
 			podcast_title = podcast_title.replace("/", "")
-			file_name = f"{podcast_title}.mp3"
+			file_name = f"{pub_date} {podcast_title}.mp3"
 			
 			# check for existence of file in the save directory
-			if file_name in os.listdir(directory):
+			if file_name.strip() in os.listdir(directory):
 				print(f"{file_name} is already saved in this folder. Skipping")
 			else:
 				try:
@@ -260,7 +269,6 @@ def main():
 if __name__ == '__main__':
 	main()
 
-# todo: what other metadata can be pulled from the rss feed?
-# todo: similar to yt-dlp, what formatting options can we add to the file names: episode nubmer in que, dates etc....
-# todo:add logging, or at least soemthing that catches erros
+
+
 
