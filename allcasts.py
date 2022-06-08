@@ -14,12 +14,9 @@ import requests
 import argparse
 import colorama as col
 import pyinputplus as pyip
-import wget
 import xmltodict
-from pprint import pprint
 from itunes_API import ItunesAPI
 import csv
-import time
 from datetime import datetime
 
 # initialise colorama (required for Windows)
