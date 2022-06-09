@@ -13,7 +13,7 @@ import sys
 import requests
 import argparse
 import colorama as col
-import pyinputplus as pyiprm 
+import pyinputplus as pyip
 import xmltodict
 from itunes_API import ItunesAPI
 import csv
