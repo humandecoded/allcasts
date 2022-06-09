@@ -13,7 +13,7 @@ import sys
 import requests
 import argparse
 import colorama as col
-import pyinputplus as pyip
+import pyinputplus as pyiprm 
 import xmltodict
 from itunes_API import ItunesAPI
 import csv
@@ -119,8 +119,11 @@ def download_all_episodes(feed_url, directory, log_path):
 			file_name = f"{pub_date} {podcast_title}.mp3"
 			
 			# check for existence of file in the save directory
-			if file_name.strip() in os.listdir(directory):
+			if (file_name.strip() in os.listdir(directory) or 
+			    podcast_title+".mp3" in os.listdir(directory)):
+
 				print(f"{file_name} is already saved in this folder. Skipping")
+			
 			else:
 				try:
 					download_episode(item['enclosure']['@url'], directory, file_name)
