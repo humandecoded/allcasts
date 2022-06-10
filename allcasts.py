@@ -5,7 +5,7 @@ allcasts allows you to batch download podcasts from a given RSS feed.
 allcasts can download all episodes, a range of episodes, or a specific episode.
 Get started by running allcasts with no arguments or with the --help argument.
 '''
-__version__ = '0.1.6'
+
 import os
 import urllib
 from os import path
@@ -272,3 +272,4 @@ if __name__ == '__main__':
 
 
 
+# todo: functionality to harvest and parse out metadata for your podcasts. Like pull in episode description
