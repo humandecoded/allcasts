@@ -127,7 +127,7 @@ def download_all_episodes(feed_url, directory, log_path):
 			else:
 				try:
 					download_episode(item['enclosure']['@url'], directory, file_name)
-				except KeyError:
+				except:
 					print(f"Error: Could not download {file_name}......")
 					f.write(f"{directory}/{podcast_title}\n")
 
