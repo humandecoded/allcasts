@@ -27,11 +27,14 @@ def create_podcast_dict(url):
 	'''
 	returns a dictionary of the podcast feed
 	'''
-	print(url)
-	with urllib.request.urlopen(url) as response:
-		podcast_dict = xmltodict.parse(response.read())
+	try:
+	    print(url)
+	    with urllib.request.urlopen(url) as response:
+		    podcast_dict = xmltodict.parse(response.read())
 
-	return podcast_dict
+	    return podcast_dict
+	except:
+		return "Error"
 
 def download_episode(feed_url, directory, episode_number):
 	'''
@@ -103,36 +106,41 @@ def download_all_episodes(feed_url, directory, log_path):
 	with open(log_path, "a") as f:
 	# create the directory if it doesn't exist
 		podcast_dict = create_podcast_dict(feed_url)
-		for item in podcast_dict['rss']['channel']['item']:
-			podcast_title = item['title']
-			# extract the publish date from rss feed
-			try:
-				pub_date = datetime.strftime(datetime.strptime(item['pubDate'], "%a, %d %b %Y %H:%M:%S %z"), "%Y-%m-%d")
-			except ValueError:
+		# if rss feed was able to resolve
+		if podcast_dict != "Error":
+			for item in podcast_dict['rss']['channel']['item']:
+				podcast_title = item['title']
+				# extract the publish date from rss feed
 				try:
-					pub_date = datetime.strftime(datetime.strptime(item['pubDate'], "%a, %d %b %Y %H:%M:%S %Z"), "%Y-%m-%d")
+					pub_date = datetime.strftime(datetime.strptime(item['pubDate'], "%a, %d %b %Y %H:%M:%S %z"), "%Y-%m-%d")
 				except ValueError:
-					pub_date=""
+					try:
+						pub_date = datetime.strftime(datetime.strptime(item['pubDate'], "%a, %d %b %Y %H:%M:%S %Z"), "%Y-%m-%d")
+					except ValueError:
+						pub_date=""
 
-			# slashes will break the file name
-			podcast_title = podcast_title.replace("/", "")
-			file_name = f"{pub_date} {podcast_title}.mp3"
-			
-			# check for existence of file in the save directory
-			if (file_name.strip() in os.listdir(directory) or 
-			    podcast_title+".mp3" in os.listdir(directory)):
+				# slashes will break the file name
+				podcast_title = podcast_title.replace("/", "")
+				file_name = f"{pub_date} {podcast_title}.mp3"
+				
+				# check for existence of file in the save directory
+				if (file_name.strip() in os.listdir(directory) or 
+					podcast_title+".mp3" in os.listdir(directory)):
 
-				print(f"{file_name} is already saved in this folder. Skipping")
-			
-			else:
-				try:
-					download_episode(item['enclosure']['@url'], directory, file_name)
-				except:
-					print(f"Error: Could not download {file_name}......")
-					f.write(f"{directory}/{podcast_title}\n")
+					print(f"{file_name} is already saved in this folder. Skipping")
+				
+				else:
+					try:
+						download_episode(item['enclosure']['@url'], directory, file_name)
+					except:
+						print(f"Error: Could not download {file_name}......")
+						f.write(f"{directory}/{podcast_title}\n")
 
-				print(f"\n{col.Fore.GREEN}🎧 Downloaded {podcast_title}{col.Fore.RESET} as {col.Fore.BLUE}{file_name}{col.Fore.RESET}")
-		print(f"\n{col.Fore.BLUE}--> 🎉 All podcasts downloaded!{col.Fore.RESET}")
+					print(f"\n{col.Fore.GREEN}🎧 Downloaded {podcast_title}{col.Fore.RESET} as {col.Fore.BLUE}{file_name}{col.Fore.RESET}")
+			print(f"\n{col.Fore.BLUE}--> 🎉 All podcasts downloaded!{col.Fore.RESET}")
+		# write feed resolve error to log
+		else:
+			f.write(f"Could not resolve {feed_url}\n")
 
 def create_directory(directory):
 	'''
