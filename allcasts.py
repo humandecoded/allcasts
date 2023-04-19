@@ -132,9 +132,10 @@ def download_all_episodes(feed_url, directory, log_path):
 				else:
 					try:
 						download_episode(item['enclosure']['@url'], directory, file_name)
+						f.write(f"Downloaded: {directory}/{podcast_title}\n")
 					except:
 						print(f"Error: Could not download {file_name}......")
-						f.write(f"{directory}/{podcast_title}\n")
+						f.write(f"Error: Could not download {directory}/{podcast_title}\n")
 
 					print(f"\n{col.Fore.GREEN}🎧 Downloaded {podcast_title}{col.Fore.RESET} as {col.Fore.BLUE}{file_name}{col.Fore.RESET}")
 			print(f"\n{col.Fore.BLUE}--> 🎉 All podcasts downloaded!{col.Fore.RESET}")
