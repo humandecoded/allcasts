@@ -17,8 +17,8 @@ def WhisperTranscribe(audio_file):
 # function that takes a transcription and returns a summarized version of the text
 def LlamaSummarize(text):
     #start with just first 2000 words of text
-    if len(text.split()) > 2000:
-        text = " ".join(text.split()[:2000])
+    if len(text.split()) > 2500:
+        text = " ".join(text.split()[:2500])
     
     #set up the post request to the llama3 api
     url = "http://localhost:11434/api/generate"
@@ -26,7 +26,7 @@ def LlamaSummarize(text):
         "Content-Type": "application/json"
     }
     data = {
-        "prompt": "This is the first 15 minutes of a podcast. Summarize in no more than two paragraphs wha the speaker is discussing:" + text,
+        "prompt": "This is the first 15 minutes of a podcast. Summarize with a bullet pointed list : " + text,
         "stream": False,
         "model": "llama3:70b",
         "keep_alive": 0
@@ -34,6 +34,18 @@ def LlamaSummarize(text):
     
     #make the post request
     response = requests.post(url, headers=headers, data=json.dumps(data))
+
+    #need to check the response to see if llm has hallucinated slashes or short response
+    if len(json.loads(response.text)["response"]) < 200 or "\\" in json.loads(response.text)["response"]:
+        print("Response was too short or hallucinated slashes. Trying again with a different model")
+        print(f"Sample of text: {text[:100]}")
+        data = {
+            "prompt": "You are a summarizer of podcasts. This is the first 15 minutes of a podcast. Summarize the key points with a bullet pointed list : " + text,
+            "stream": False,
+            "model": "llama3:70b-instruct",
+            "keep_alive": 0
+        }
+        response = requests.post(url, headers=headers, data=json.dumps(data))
     # return the response text
     return json.loads(response.text)["response"]
     

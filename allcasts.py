@@ -19,12 +19,12 @@ import csv
 from datetime import datetime
 from summarize import WhisperTranscribe, LlamaSummarize
 from pydub import AudioSegment
-
-
+import privatebinapi
+from dotenv import load_dotenv
 
 # initialise colorama (required for Windows)
 col.init()
-
+load_dotenv()
 
 def create_podcast_dict(url):
 	
@@ -54,7 +54,7 @@ def download_episode(episode_url, directory, filename):
 				f.write(chunk)
 		f.flush()
 
-def download_all_episodes(feed_url, directory, log_path, transcribe=False):
+def download_all_episodes(feed_url, directory, log_path, transcribe=False, paste=False):
 	
 	# download all podcasts from the rss feed url and save them to the directory
 	
@@ -94,17 +94,25 @@ def download_all_episodes(feed_url, directory, log_path, transcribe=False):
 					if transcribe == True:
 						sleep(5)
 						audio = AudioSegment.from_file(directory + file_name)
-						first_15_minutes = audio[:900000]
+						first_15_minutes = audio[:1200000]
 						AudioSegment.export(first_15_minutes, format="mp3", out_f=directory + file_name + "15")
 						print(f"Transcribing {file_name}...")
 						transcription = WhisperTranscribe(directory + file_name + "15")
 						print(f"Summarizing {file_name}...")
 						summary = LlamaSummarize(transcription)
-					f.write(f"Downloaded: {directory}{podcast_title}\n {summary}\n\n")
+					
+					if(paste):
+						print("Uploading to privatebin...")
+						response = privatebinapi.send(os.getenv("PRIVATE_BIN"), text=summary)
+						f.write(f"Downloaded: {directory}{podcast_title}\n {response['full_url']}\n\n")
+						print(summary)
+					else:
+						f.write(f"Downloaded: {directory}{podcast_title}\n {summary}\n\n")
+						f.write("--------------------------------------------------\n\n\n")
 					f.flush()
-					#except:
-					#	print(f"Error: Could not download {file_name}......")
-					#	f.write(f"Error: Could not download {directory}/{podcast_title}\n")
+					#remove the 15 minute file
+					if os.path.exists(directory + file_name + "15"):
+						os.remove(directory + file_name + "15")
 
 					print(f"\n{col.Fore.GREEN}🎧 Downloaded {podcast_title}{col.Fore.RESET} as {col.Fore.BLUE}{file_name}{col.Fore.RESET}")
 			print(f"\n{col.Fore.BLUE}--> 🎉 All podcasts downloaded!{col.Fore.RESET}")
@@ -120,7 +128,7 @@ def create_directory(directory):
 		print(f"Creating directory {directory}")
 		os.makedirs(directory)
 
-def download_all_podcasts_from_file(file_path, directory, transcribe=False):
+def download_all_podcasts_from_file(file_path, directory, transcribe=False, paste=False):
 	
 	# download all podcasts from a text file and save them to the directory
 	
@@ -137,7 +145,11 @@ def download_all_podcasts_from_file(file_path, directory, transcribe=False):
 			else:
 				save_location = directory + line[1].strip() + "/"
 			create_directory(save_location)
-			download_all_episodes(feed_url = line[0].strip(), directory = save_location, log_path=directory+log_name, transcribe=transcribe)
+			download_all_episodes(feed_url = line[0].strip(), 
+						 directory = save_location, 
+						 log_path=directory+log_name, 
+						 transcribe=transcribe, 
+						 paste=paste)
 
 
 def main():
@@ -153,6 +165,7 @@ def main():
 		parser.add_argument("-i", "--input", help="the input file containing a list of podcast feeds", required=True, type=str, metavar="<FILE>")
 		parser.add_argument("-d", "--directory", help="the directory to save the podcast episodes", required=False, type=str, metavar="<DIRECTORY>")
 		parser.add_argument("-t", "--transcribe", help="transcribe the podcast episodes", required=False, action="store_true")
+		parser.add_argument("-p", "--paste", help="paste the log file to a privatebin", required=False, action="store_true")
 		args = parser.parse_args()
 		if args.directory:
 			if not path.isdir(args.directory):
@@ -168,7 +181,7 @@ def main():
 			directory = os.getcwd() + "/"
 		
 		if args.input:
-			download_all_podcasts_from_file(args.input, directory, args.transcribe)
+			download_all_podcasts_from_file(args.input, directory, args.transcribe, args.paste)
 		else:
 			print(f"{col.Fore.RED}ERROR: You must specify either --all, --start, or --end{col.Fore.RESET}")
 			sys.exit()
