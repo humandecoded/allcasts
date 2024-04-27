@@ -4,3 +4,5 @@ PySimpleValidate
 stdiomask
 xmltodict
 requests
+openai-whisper
+python-dotenv
