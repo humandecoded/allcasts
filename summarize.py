@@ -17,8 +17,8 @@ def WhisperTranscribe(audio_file):
 # function that takes a transcription and returns a summarized version of the text
 def LlamaSummarize(text):
     #start with just first 2000 words of text
-    if len(text.split()) > 2500:
-        text = " ".join(text.split()[:2500])
+    #if len(text.split()) > 2500:
+     #   text = " ".join(text.split()[:2500])
     
     #set up the post request to the llama3 api
     url = "http://localhost:11434/api/generate"

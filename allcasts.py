@@ -13,7 +13,6 @@ import sys
 import requests
 import argparse
 import colorama as col
-import pyinputplus as pyip
 import xmltodict
 import csv
 from datetime import datetime
@@ -25,6 +24,16 @@ from dotenv import load_dotenv
 # initialise colorama (required for Windows)
 col.init()
 load_dotenv()
+
+
+def chunk_string_by_words(text, chunk_size):
+    words = text.split()  # Split the text into words
+    chunks = []
+    for i in range(0, len(words), chunk_size):
+        # Join words to form chunks of 'chunk_size'
+        chunks.append(" ".join(words[i:i + chunk_size]))
+    return chunks
+
 
 def create_podcast_dict(url):
 	
@@ -93,14 +102,22 @@ def download_all_episodes(feed_url, directory, log_path, transcribe=False, paste
 					download_episode(item['enclosure']['@url'], directory, file_name)
 					if transcribe == True:
 						sleep(5)
-						audio = AudioSegment.from_file(directory + file_name)
-						first_15_minutes = audio[:1200000]
-						AudioSegment.export(first_15_minutes, format="mp3", out_f=directory + file_name + "15")
+						#audio = AudioSegment.from_file(directory + file_name)
+						#first_15_minutes = audio[:1200000]
+						#AudioSegment.export(first_15_minutes, format="mp3", out_f=directory + file_name + "15")
 						print(f"Transcribing {file_name}...")
-						transcription = WhisperTranscribe(directory + file_name + "15")
+						transcription = WhisperTranscribe(directory + file_name)
 						print(f"Summarizing {file_name}...")
-						summary = LlamaSummarize(transcription)
-					
+
+						# split the transcription into chunks of 2000 words
+						transcription_list = chunk_string_by_words(transcription, 2000)
+						summary_string = ""
+						for transcription_chunk in transcription_list:
+							summary = LlamaSummarize(transcription_chunk)
+							summary_string = summary_string + summary + "\n"
+						print(f"llama is looking at a total of {len(summary_string.split())} words")
+						print(f"originally, the transcription was {len(transcription.split())} words")
+						summary = LlamaSummarize(summary_string)
 					if(paste):
 						print("Uploading to privatebin...")
 						response = privatebinapi.send(os.getenv("PRIVATE_BIN"), text=summary)
