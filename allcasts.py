@@ -71,10 +71,10 @@ def download_all_episodes(feed_url, directory, log_path, transcribe=False, paste
 				podcast_title = item['title']
 				# extract the publish date from rss feed
 				try:
-					pub_date = datetime.strftime(datetime.strptime(item['pubDate'], "%a, %d %b %Y %H:%M:%S %z"), "%Y-%m-%d")
+					pub_date = datetime.strftime(datetime.strptime(item['pubDate'], "%a, %d %b %Y %H:%M:%S %z"), "%Y%m%d")
 				except ValueError:
 					try:
-						pub_date = datetime.strftime(datetime.strptime(item['pubDate'], "%a, %d %b %Y %H:%M:%S %Z"), "%Y-%m-%d")
+						pub_date = datetime.strftime(datetime.strptime(item['pubDate'], "%a, %d %b %Y %H:%M:%S %Z"), "%Y%m%d")
 					except ValueError:
 						pub_date=""
 
@@ -93,6 +93,7 @@ def download_all_episodes(feed_url, directory, log_path, transcribe=False, paste
 					#try:
 					summary = ""
 					download_episode(item['enclosure']['@url'], directory, file_name)
+					# handle transcription and writing either summary or paste to logfile
 					if transcribe == True:
 						sleep(5)
 						print(f"Transcribing {file_name}...")
@@ -112,15 +113,21 @@ def download_all_episodes(feed_url, directory, log_path, transcribe=False, paste
 						prompt = "You are a summarize of podcasts and videos. This is a summary of different sections of that episode. Create a bullet pointed list that summarizes those summaries: "
 						print(f"Using prompt: {prompt}")
 						summary = LlamaSummarize(summary_string, prompt=prompt)
-					if(paste):
-						print("Uploading to privatebin...")
-						response = privatebinapi.send(os.getenv("PRIVATE_BIN"), text=summary)
-						f.write(f"Downloaded: {directory}{podcast_title}\n {response['full_url']}\n\n")
-						print(summary)
+						if(paste):
+							print("Uploading to privatebin...")
+							response = privatebinapi.send(os.getenv("PRIVATE_BIN"), text=summary)
+							f.write(f"Downloaded: {directory}{file_name}\n {response['full_url']}\n\n")
+							print(summary)
+						else:
+							f.write(f"Downloaded: {directory}{file_name}\n {summary}\n\n")
+							f.write("--------------------------------------------------\n\n\n")
+						f.flush()
+					# if not transcribing, just write the file name to the log
 					else:
-						f.write(f"Downloaded: {directory}{podcast_title}\n {summary}\n\n")
+						f.write(f"Downloaded: {directory}{file_name}\n\n")
 						f.write("--------------------------------------------------\n\n\n")
-					f.flush()
+						f.flush()
+					
 					#remove the 15 minute file
 					if os.path.exists(directory + file_name + "15"):
 						os.remove(directory + file_name + "15")
